@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Нотатки</title>
+</head>
+<body>
+  <h1>Нотатки</h1>
+  <input type="text" id="noteInput" placeholder="Введіть текст..." />
+  <button id="saveBtn">Зберегти</button>
+  <p id="savedNote"></p>
+
+  <script>
+    const input = document.getElementById('noteInput');
+    const btn = document.getElementById('saveBtn');
+    const saved = document.getElementById('savedNote');
+
+    const stored = localStorage.getItem('note');
+    if (stored) {
+      saved.textContent = 'Збережено: ' + stored;
+      input.value = stored;
+    }
+
+    btn.addEventListener('click', () => {
+      const text = input.value.trim();
+      if (text) {
+        localStorage.setItem('note', text);
+        saved.textContent = 'Збережено: ' + text;
+      }
+    });
+  </script>
+</body>
+</html>
