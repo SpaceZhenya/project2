@@ -3,31 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Нотатки</title>
+  <title>Генератор відео</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; text-align: center; }
+    canvas { width: 100%; max-width: 640px; border: 2px solid #ccc; border-radius: 8px; margin-top: 20px; }
+    input { padding: 10px; font-size: 16px; width: 300px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+    video { width: 100%; max-width: 640px; margin-top: 20px; border-radius: 8px; }
+    .status { margin-top: 10px; font-size: 14px; color: #666; }
+  </style>
 </head>
 <body>
-  <h1>Нотатки</h1>
-  <input type="text" id="noteInput" placeholder="Введіть текст..." />
-  <button id="saveBtn">Зберегти</button>
-  <p id="savedNote"></p>
+  <h1>Генератор відео з тексту</h1>
+
+  <div>
+    <input type="text" id="noteInput" placeholder="Введіть текст..." />
+    <button id="saveBtn">Зберегти</button>
+    <p id="savedNote"></p>
+  </div>
+
+  <div>
+    <button id="startBtn">Старт</button>
+    <button id="downloadBtn" style="display:none">Завантажити відео</button>
+  </div>
+
+  <p class="status" id="status">Натисніть "Старт", щоб згенерувати відео</p>
+
+  <canvas id="canvas" width="640" height="360"></canvas>
+  <video id="preview" controls style="display:none"></video>
 
   <script>
     const input = document.getElementById('noteInput');
-    const btn = document.getElementById('saveBtn');
-    const saved = document.getElementById('savedNote');
+    const saveBtn = document.getElementById('saveBtn');
+    const savedNote = document.getElementById('savedNote');
+    const startBtn = document.getElementById('startBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const preview = document.getElementById('preview');
+    const status = document.getElementById('status');
+
+    let recordedBlob = null;
 
     const stored = localStorage.getItem('note');
     if (stored) {
-      saved.textContent = 'Збережено: ' + stored;
       input.value = stored;
+      savedNote.textContent = 'Збережено: ' + stored;
     }
 
-    btn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', () => {
       const text = input.value.trim();
       if (text) {
         localStorage.setItem('note', text);
-        saved.textContent = 'Збережено: ' + text;
+        savedNote.textContent = 'Збережено: ' + text;
       }
+    });
+
+    function drawFrame(text, progress) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      grad.addColorStop(0, '#1a1a2e');
+      grad.addColorStop(1, '#16213e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 30; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.1 + 0.05})`;
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const visibleLen = Math.floor(text.length * progress);
+      const displayText = text.slice(0, visibleLen);
+
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(displayText, canvas.width / 2, canvas.height / 2);
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '18px Arial';
+      ctx.fillText('spacezhenya/project2', canvas.width - 150, canvas.height - 20);
+    }
+
+    startBtn.addEventListener('click', async () => {
+      const text = input.value.trim();
+      if (!text) {
+        status.textContent = 'Спочатку введіть текст!';
+        return;
+      }
+
+      status.textContent = 'Генерація відео...';
+      startBtn.disabled = true;
+      preview.style.display = 'none';
+      downloadBtn.style.display = 'none';
+      recordedBlob = null;
+
+      const fps = 30;
+      const duration = 3;
+      const totalFrames = fps * duration;
+
+      const stream = canvas.captureStream(fps);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+      const recordingDone = new Promise((resolve) => {
+        recorder.onstop = () => {
+          recordedBlob = new Blob(chunks, { type: 'video/webm' });
+          resolve();
+        };
+      });
+
+      recorder.start();
+
+      for (let i = 0; i <= totalFrames; i++) {
+        const progress = Math.min(i / totalFrames, 1);
+        drawFrame(text, progress);
+        await new Promise(r => setTimeout(r, 1000 / fps));
+      }
+
+      recorder.stop();
+      await recordingDone;
+
+      const url = URL.createObjectURL(recordedBlob);
+      preview.src = url;
+      preview.style.display = 'block';
+      downloadBtn.style.display = 'inline-block';
+      status.textContent = 'Відео готове!';
+      startBtn.disabled = false;
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!recordedBlob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(recordedBlob);
+      a.download = 'video.webm';
+      a.click();
     });
   </script>
 </body>
