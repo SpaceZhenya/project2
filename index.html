@@ -372,9 +372,11 @@
       const cell = calGrid.children[childIdx];
       if (!cell) continue;
 
+      const p = rem.priority || 'medium';
+      const icon = { high: '🔴', medium: '🟡', low: '🟢' }[p] || '';
       const el = document.createElement('div');
-      el.className = 'event ' + (rem.priority || 'medium') + (rem.fired ? ' fired' : '');
-      el.innerHTML = '<span class="etext">' + rem.text + '</span> <span class="etime">' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + '</span>';
+      el.className = 'event ' + p + (rem.fired ? ' fired' : '');
+      el.innerHTML = '<span class="etext">' + icon + ' ' + rem.text + '</span> <span class="etime">' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + '</span>';
       el.title = rem.text + '\n' + d.toLocaleString('uk-UA');
 
       initDrag(el, i);
