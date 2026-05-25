@@ -3,328 +3,447 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Нагадування</title>
+  <title>Календар</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 30px auto; padding: 0 16px; background: #0f0f1a; color: #e0e0e0; }
-    h1 { text-align: center; font-size: 22px; color: #4a9eff; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .stats { display: flex; justify-content: center; gap: 16px; font-size: 13px; color: #888; margin-bottom: 14px; flex-wrap: wrap; }
-    .stats span { background: #1a1a2e; padding: 4px 14px; border-radius: 20px; border: 1px solid #2a2a3e; }
-    .stats b { color: #4a9eff; }
-    .add-row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-    .add-row input { flex: 1; min-width: 120px; padding: 10px 12px; font-size: 14px; border: 2px solid #333; border-radius: 8px; outline: none; background: #1a1a2e; color: #e0e0e0; }
-    .add-row input:focus { border-color: #4a9eff; }
-    .add-row input[type="datetime-local"] { min-width: 180px; color-scheme: dark; }
-    .add-row select { padding: 10px 8px; font-size: 13px; border: 2px solid #333; border-radius: 8px; background: #1a1a2e; color: #e0e0e0; outline: none; cursor: pointer; }
-    .add-row button { padding: 10px 16px; background: #4a9eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; white-space: nowrap; }
-    .add-row button:hover { background: #3a8eef; }
-    .add-row .voice-btn { background: #2d2d5e; }
-    .add-row .voice-btn:hover { background: #3d3d7e; }
-    .add-row .voice-btn.listening { background: #e94560; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-    .reminder { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #1a1a2e; border-radius: 10px; margin-bottom: 5px; border-left: 4px solid #4a9eff; transition: .2s; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+    .app { max-width: 1100px; margin: 0 auto; padding: 12px 10px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+    h1 { text-align: center; font-size: 20px; color: #4a9eff; margin: 0 0 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .top-bar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+    .top-bar input { flex: 1; min-width: 100px; padding: 8px 10px; font-size: 13px; border: 2px solid #333; border-radius: 6px; outline: none; background: #1a1a2e; color: #e0e0e0; }
+    .top-bar input:focus { border-color: #4a9eff; }
+    .top-bar input[type="datetime-local"] { min-width: 170px; flex: 0 1 auto; color-scheme: dark; font-size: 12px; }
+    .top-bar select { padding: 8px 6px; font-size: 12px; border: 2px solid #333; border-radius: 6px; background: #1a1a2e; color: #e0e0e0; outline: none; }
+    .top-bar button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; }
+    #addBtn { background: #4a9eff; color: #fff; }
+    #addBtn:hover { background: #3a8eef; }
+    #voiceBtn { background: #2d2d5e; color: #aaa; }
+    #voiceBtn:hover { background: #3d3d7e; }
+    #voiceBtn.listening { background: #e94560; animation: pulse 1s infinite; color: #fff; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+    .nav-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 6px; flex-wrap: wrap; }
+    .nav-bar .week-title { font-size: 15px; font-weight: 600; color: #fff; }
+    .nav-bar .nav-group { display: flex; gap: 4px; }
+    .nav-bar button { background: #1a1a2e; color: #aaa; border: 1px solid #333; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .nav-bar button:hover { background: #2a2a4e; color: #fff; }
+    .nav-bar .today-btn { background: #4a9eff22; color: #4a9eff; border-color: #4a9eff44; }
+
+    .cal-wrap { flex: 1; overflow: auto; border-radius: 8px; border: 1px solid #222; background: #12121e; min-height: 0; position: relative; }
+    .cal-grid { display: grid; grid-template-columns: 50px repeat(7, 1fr); min-width: 0; }
+    .cal-cell { border-right: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; min-height: 36px; padding: 1px; position: relative; }
+    .cal-cell.header { background: #1a1a2e; font-size: 11px; text-align: center; padding: 6px 2px; font-weight: 600; color: #888; position: sticky; top: 0; z-index: 5; }
+    .cal-cell.header.today { color: #4a9eff; background: #1a1a3e; }
+    .cal-cell.header .num { font-size: 16px; display: block; }
+    .cal-cell.time { background: #0a0a14; color: #555; font-size: 10px; text-align: right; padding-right: 6px; display: flex; align-items: start; justify-content: end; padding-top: 2px; border-bottom: 1px solid #181828; position: relative; }
+    .cal-cell.time .label { position: sticky; top: 0; }
+    .cal-cell.drop-hover { background: #1a2a4e !important; }
+
+    .event { font-size: 10px; padding: 2px 4px; border-radius: 4px; cursor: grab; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; transition: opacity .15s; user-select: none; }
+    .event:active { cursor: grabbing; }
+    .event.high { background: #e94560cc; border-left: 2px solid #e94560; }
+    .event.medium { background: #f0a500cc; border-left: 2px solid #f0a500; color: #111; }
+    .event.low { background: #4a9effcc; border-left: 2px solid #4a9eff; }
+    .event.fired { opacity: .35; }
+    .event.dragging { opacity: .3; }
+    .event .etext { font-weight: 500; }
+    .event .etime { font-size: 9px; opacity: .7; }
+
+    .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; font-size: 11px; padding: 4px 8px; border-radius: 6px; color: #fff; opacity: .85; transform: translate(-50%, -50%); box-shadow: 0 4px 20px rgba(0,0,0,.5); }
+
+    .list-section { margin-top: 8px; flex-shrink: 0; max-height: 140px; overflow-y: auto; }
+    .list-section::-webkit-scrollbar { width: 4px; }
+    .list-section::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .list-toggle { background: none; border: none; color: #555; cursor: pointer; font-size: 12px; padding: 4px; width: 100%; text-align: center; }
+    .list-toggle:hover { color: #888; }
+    .reminder { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: #1a1a2e; margin-bottom: 2px; border-radius: 6px; border-left: 3px solid #4a9eff; font-size: 12px; }
     .reminder.high { border-left-color: #e94560; }
     .reminder.medium { border-left-color: #f0a500; }
     .reminder.low { border-left-color: #4a9eff; }
-    .reminder.fired { opacity: .4; border-left-color: #555 !important; }
-    .reminder .info { flex: 1; min-width: 0; }
-    .reminder .text { font-size: 14px; word-break: break-word; }
-    .reminder .meta { font-size: 11px; color: #666; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .reminder .meta .repeat-badge { color: #f0a500; }
-    .reminder .countdown { font-size: 12px; color: #4a9eff; font-weight: 600; min-width: 70px; text-align: right; }
-    .reminder.fired .countdown { color: #555; }
-    .reminder .del-btn { background: none; border: none; color: #444; cursor: pointer; font-size: 18px; padding: 0 2px; }
-    .reminder .del-btn:hover { color: #e74c3c; }
-    .empty { text-align: center; color: #444; margin-top: 40px; font-size: 14px; }
-    .perm-banner { background: #2d1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-bottom: 14px; display: none; align-items: center; gap: 8px; }
-    .perm-banner button { background: #e94560; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 11px; }
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a3a1a; border: 1px solid #2a5a2a; color: #8f8; padding: 8px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+    .reminder.fired { opacity: .3; }
+    .reminder .rtext { flex: 1; }
+    .reminder .rtime { color: #666; font-size: 11px; margin-right: 6px; }
+    .reminder .rdel { background: none; border: none; color: #444; cursor: pointer; font-size: 14px; padding: 0 2px; }
+    .reminder .rdel:hover { color: #e74c3c; }
+
+    .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #1a3a1a; border: 1px solid #2a5a2a; color: #8f8; padding: 6px 16px; border-radius: 8px; font-size: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
     .toast.show { opacity: 1; }
+    .perm-banner { background: #2d1a1a; border: 1px solid #5a2020; border-radius: 6px; padding: 6px 10px; font-size: 11px; margin-bottom: 8px; display: none; align-items: center; gap: 8px; }
+    .perm-banner button { background: #e94560; color: #fff; border: none; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 10px; }
+
+    @media (max-width: 600px) {
+      .top-bar input[type="datetime-local"] { min-width: 130px; }
+      .top-bar select { padding: 6px 4px; font-size: 11px; }
+      .cal-grid { grid-template-columns: 35px repeat(7, 1fr); }
+      .cal-cell.header { font-size: 9px; padding: 4px 1px; }
+      .cal-cell.header .num { font-size: 13px; }
+      .cal-cell.time { font-size: 8px; padding-right: 3px; }
+      .event { font-size: 8px; padding: 1px 2px; }
+    }
   </style>
 </head>
 <body>
-  <h1>⏰ Нагадування</h1>
+<div class="app">
+  <h1>📅 Календар</h1>
 
   <div class="perm-banner" id="permBanner">
     <span>🔔 Увімкніть сповіщення</span>
     <button id="permBtn">Увімкнути</button>
   </div>
 
-  <div class="stats">
-    <span>📅 Сьогодні: <b id="todayCount">0</b></span>
-    <span>✅ Виконано: <b id="doneCount">0</b></span>
-    <span>⏳ Активних: <b id="activeCount">0</b></span>
-  </div>
-
-  <div class="add-row">
+  <div class="top-bar">
     <input type="text" id="textInput" placeholder="Що нагадати?" />
     <input type="datetime-local" id="timeInput" />
     <select id="repeatSelect">
-      <option value="">Один раз</option>
-      <option value="daily">Щодня</option>
-      <option value="weekly">Щотижня</option>
-      <option value="monthly">Щомісяця</option>
+      <option value="">Один раз</option><option value="daily">Щодня</option><option value="weekly">Щотижня</option><option value="monthly">Щомісяця</option>
     </select>
     <select id="prioritySelect">
-      <option value="low">🟢 Низький</option>
-      <option value="medium" selected>🟡 Середній</option>
-      <option value="high">🔴 Високий</option>
+      <option value="low">🟢 Низький</option><option value="medium" selected>🟡 Сер</option><option value="high">🔴 Вис</option>
     </select>
-    <button id="voiceBtn" class="voice-btn" title="Голосовий ввід">🎤</button>
-    <button id="addBtn">+</button>
+    <button id="voiceBtn" title="Голосовий ввід">🎤</button>
+    <button id="addBtn">+ Додати</button>
   </div>
 
-  <div id="list"></div>
-  <div class="empty" id="emptyMsg">Немає нагадувань. Додайте нове!</div>
-  <div class="toast" id="toast"></div>
+  <div class="nav-bar">
+    <div class="nav-group">
+      <button id="prevWeekBtn">◀</button>
+      <button id="todayBtn" class="today-btn">Сьогодні</button>
+      <button id="nextWeekBtn">▶</button>
+    </div>
+    <span class="week-title" id="weekTitle"></span>
+    <div class="nav-group">
+      <button id="viewListBtn">📋 Список</button>
+    </div>
+  </div>
 
-  <script>
-    const textInput = document.getElementById('textInput');
-    const timeInput = document.getElementById('timeInput');
-    const repeatSelect = document.getElementById('repeatSelect');
-    const prioritySelect = document.getElementById('prioritySelect');
-    const addBtn = document.getElementById('addBtn');
-    const voiceBtn = document.getElementById('voiceBtn');
-    const list = document.getElementById('list');
-    const emptyMsg = document.getElementById('emptyMsg');
-    const permBanner = document.getElementById('permBanner');
-    const permBtn = document.getElementById('permBtn');
-    const todayCount = document.getElementById('todayCount');
-    const doneCount = document.getElementById('doneCount');
-    const activeCount = document.getElementById('activeCount');
-    const toast = document.getElementById('toast');
+  <div class="cal-wrap" id="calWrap">
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
 
-    let reminders = JSON.parse(localStorage.getItem('reminders2') || '[]');
-    let voiceListening = false;
+  <div class="list-section" id="listSection" style="display:none">
+    <button class="list-toggle" id="listToggle">▲ Список справ</button>
+    <div id="listContent"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
 
-    function save() { localStorage.setItem('reminders2', JSON.stringify(reminders)); }
+<script>
+  // --- DOM refs ---
+  const textInput = document.getElementById('textInput');
+  const timeInput = document.getElementById('timeInput');
+  const repeatSelect = document.getElementById('repeatSelect');
+  const prioritySelect = document.getElementById('prioritySelect');
+  const addBtn = document.getElementById('addBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
+  const calGrid = document.getElementById('calGrid');
+  const calWrap = document.getElementById('calWrap');
+  const weekTitle = document.getElementById('weekTitle');
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const todayBtn = document.getElementById('todayBtn');
+  const viewListBtn = document.getElementById('viewListBtn');
+  const listSection = document.getElementById('listSection');
+  const listContent = document.getElementById('listContent');
+  const toast = document.getElementById('toast');
+  const permBanner = document.getElementById('permBanner');
+  const permBtn = document.getElementById('permBtn');
 
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toast._hide);
-      toast._hide = setTimeout(() => toast.classList.remove('show'), 2500);
-    }
+  let reminders = JSON.parse(localStorage.getItem('remCal') || '[]');
+  let weekStart = getMonday(new Date());
+  let dragData = null;
 
-    // --- Notifications ---
-    function checkNotifications() {
-      if (!('Notification' in window)) return;
-      if (Notification.permission === 'granted') permBanner.style.display = 'none';
-      else if (Notification.permission === 'denied') { permBanner.style.display = 'flex'; permBtn.textContent = 'Заблоковано'; permBtn.disabled = true; }
-      else permBanner.style.display = 'flex';
-    }
-    permBtn.addEventListener('click', () => {
-      Notification.requestPermission().then(p => { if (p === 'granted') { permBanner.style.display = 'none'; showToast('Сповіщення увімкнено'); } });
+  const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+  const HOURS = Array.from({length:18}, (_,i) => i + 6); // 6..23
+
+  function save() { localStorage.setItem('remCal', JSON.stringify(reminders)); }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  function getMonday(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function formatDate(d) { return d.toISOString().slice(0,10); }
+
+  function isToday(d) { return formatDate(d) === formatDate(new Date()); }
+
+  // --- Notifications ---
+  function checkNotifications() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') permBanner.style.display = 'none';
+    else if (Notification.permission === 'denied') { permBanner.style.display = 'flex'; permBtn.textContent = 'Заблоковано'; permBtn.disabled = true; }
+    else permBanner.style.display = 'flex';
+  }
+  permBtn.addEventListener('click', () => {
+    Notification.requestPermission().then(p => { if (p === 'granted') { permBanner.style.display = 'none'; showToast('✅ Сповіщення увімкнено'); } });
+  });
+
+  function notify(rem) {
+    if ('Notification' in window && Notification.permission === 'granted')
+      new Notification('🔔 ' + rem.text, { body: new Date(rem.time).toLocaleString('uk-UA') });
+    try {
+      const a = new (window.AudioContext || window.webkitAudioContext)();
+      const o = a.createOscillator(); const g = a.createGain();
+      o.connect(g); g.connect(a.destination);
+      o.frequency.value = 880; g.gain.value = 0.3;
+      o.start(); g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.4);
+      o.stop(a.currentTime + 0.4);
+      setTimeout(() => a.close(), 800);
+    } catch {}
+  }
+
+  // --- Voice ---
+  function initVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { voiceBtn.style.display = 'none'; return; }
+    const rec = new SR();
+    rec.lang = 'uk-UA';
+    rec.interimResults = false;
+    voiceBtn.addEventListener('click', () => {
+      if (voiceBtn.classList.contains('listening')) { rec.stop(); return; }
+      try { rec.start(); voiceBtn.classList.add('listening'); } catch {}
     });
+    rec.onresult = e => {
+      textInput.value = e.results[0][0].transcript;
+      showToast('🎤 ' + e.results[0][0].transcript);
+    };
+    rec.onend = () => voiceBtn.classList.remove('listening');
+    rec.onerror = () => voiceBtn.classList.remove('listening');
+  }
 
-    function notify(rem) {
-      if ('Notification' in window && Notification.permission === 'granted')
-        new Notification('🔔 ' + rem.text, { body: new Date(rem.time).toLocaleString('uk-UA') });
-      try {
-        const a = new (window.AudioContext || window.webkitAudioContext)();
-        const o = a.createOscillator(); const g = a.createGain();
-        o.connect(g); g.connect(a.destination);
-        o.frequency.value = 880; g.gain.value = 0.3;
-        o.start(); g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.5);
-        o.stop(a.currentTime + 0.5);
-        setTimeout(() => a.close(), 1000);
-      } catch {}
-    }
+  // --- Repeat ---
+  function getNextRepeat(rem) {
+    const d = new Date(rem.time), now = Date.now();
+    if (rem.repeat === 'daily') { d.setDate(d.getDate()+1); while(d.getTime()<=now) d.setDate(d.getDate()+1); return d.toISOString(); }
+    if (rem.repeat === 'weekly') { d.setDate(d.getDate()+7); while(d.getTime()<=now) d.setDate(d.getDate()+7); return d.toISOString(); }
+    if (rem.repeat === 'monthly') { d.setMonth(d.getMonth()+1); while(d.getTime()<=now) d.setMonth(d.getMonth()+1); return d.toISOString(); }
+    return null;
+  }
 
-    // --- Voice Input ---
-    function initVoice() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { voiceBtn.style.display = 'none'; return; }
-      const recognition = new SR();
-      recognition.lang = 'uk-UA';
-      recognition.interimResults = false;
-
-      voiceBtn.addEventListener('click', () => {
-        if (voiceListening) { recognition.stop(); return; }
-        try {
-          recognition.start();
-          voiceListening = true;
-          voiceBtn.classList.add('listening');
-          voiceBtn.title = 'Слухаю...';
-        } catch {}
-      });
-
-      recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        textInput.value = text;
-        showToast('🎤 Розпізнано: ' + text);
-      };
-      recognition.onend = () => {
-        voiceListening = false;
-        voiceBtn.classList.remove('listening');
-        voiceBtn.title = 'Голосовий ввід';
-      };
-      recognition.onerror = () => {
-        voiceListening = false;
-        voiceBtn.classList.remove('listening');
-        voiceBtn.title = 'Голосовий ввід';
-      };
-    }
-
-    // --- Reminder logic ---
-    function getNextRepeatTime(rem) {
-      const d = new Date(rem.time);
-      const now = Date.now();
-      if (rem.repeat === 'daily') {
-        d.setDate(d.getDate() + 1);
-        while (d.getTime() <= now) d.setDate(d.getDate() + 1);
-        return d.toISOString();
+  function checkReminders() {
+    const now = Date.now(); let changed = false; const add = [];
+    for (const r of reminders) {
+      if (!r.fired && new Date(r.time).getTime() <= now) {
+        r.fired = true; changed = true; notify(r);
+        if (r.repeat) { const n = getNextRepeat(r); if (n) add.push({...r, time:n, fired:false}); }
       }
-      if (rem.repeat === 'weekly') {
-        d.setDate(d.getDate() + 7);
-        while (d.getTime() <= now) d.setDate(d.getDate() + 7);
-        return d.toISOString();
-      }
-      if (rem.repeat === 'monthly') {
-        d.setMonth(d.getMonth() + 1);
-        while (d.getTime() <= now) d.setMonth(d.getMonth() + 1);
-        return d.toISOString();
-      }
-      return null;
     }
+    if (add.length) { reminders.push(...add); changed = true; }
+    if (changed) { save(); render(); }
+  }
 
-    function checkReminders() {
-      const now = Date.now();
-      let changed = false;
-      const toAdd = [];
-      for (const r of reminders) {
-        if (!r.fired && new Date(r.time).getTime() <= now) {
-          r.fired = true;
-          changed = true;
-          notify(r);
-          if (r.repeat) {
-            const next = getNextRepeatTime(r);
-            if (next) toAdd.push({ text: r.text, time: next, repeat: r.repeat, priority: r.priority, fired: false });
-          }
+  // --- Drag & Drop ---
+  function initDrag(evEl, remIdx) {
+    evEl.addEventListener('mousedown', e => {
+      e.preventDefault();
+      const rem = reminders[remIdx];
+      const rect = calWrap.getBoundingClientRect();
+      const ghost = document.createElement('div');
+      ghost.className = 'drag-ghost ' + (rem.priority||'medium');
+      ghost.textContent = rem.text;
+      ghost.style.background = rem.priority==='high'?'#e94560':rem.priority==='medium'?'#f0a500':'#4a9eff';
+      if (rem.priority!=='medium') ghost.style.color='#fff';
+      document.body.appendChild(ghost);
+
+      evEl.classList.add('dragging');
+      dragData = { el: evEl, ghost, remIdx, offsetX: e.clientX, offsetY: e.clientY };
+
+      const onMove = (ev) => {
+        ghost.style.left = ev.clientX + 'px';
+        ghost.style.top = ev.clientY + 'px';
+        // highlight target cell
+        document.querySelectorAll('.drop-hover').forEach(c => c.classList.remove('drop-hover'));
+        const target = document.elementFromPoint(ev.clientX, ev.clientY);
+        if (target) {
+          const cell = target.closest('.cal-cell:not(.header):not(.time)');
+          if (cell) cell.classList.add('drop-hover');
         }
-      }
-      if (toAdd.length) { reminders.push(...toAdd); changed = true; }
-      if (changed) { save(); render(); }
+      };
+
+      const onUp = (ev) => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        ghost.remove();
+        evEl.classList.remove('dragging');
+        document.querySelectorAll('.drop-hover').forEach(c => c.classList.remove('drop-hover'));
+
+        const target = document.elementFromPoint(ev.clientX, ev.clientY);
+        if (!target) return;
+        const cell = target.closest('.cal-cell:not(.header):not(.time)');
+        if (!cell) return;
+
+        const day = parseInt(cell.dataset.day);
+        const hour = parseInt(cell.dataset.hour);
+        if (isNaN(day) || isNaN(hour)) return;
+
+        const ws = new Date(weekStart);
+        ws.setDate(ws.getDate() + day);
+        ws.setHours(hour, 0, 0, 0);
+        reminders[remIdx].time = ws.toISOString();
+        save();
+        render();
+        showToast('✅ Перенесено');
+        dragData = null;
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
+  // --- Calendar render ---
+  function render() {
+    // Build calendar grid
+    calGrid.innerHTML = '';
+
+    // Header row
+    const emptyHeader = document.createElement('div');
+    emptyHeader.className = 'cal-cell header';
+    calGrid.appendChild(emptyHeader);
+    for (let d = 0; d < 7; d++) {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(dayDate.getDate() + d);
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell header' + (isToday(dayDate) ? ' today' : '');
+      cell.innerHTML = DAYS[d] + ' <span class="num">' + dayDate.getDate() + '</span>';
+      cell.title = dayDate.toLocaleDateString('uk-UA', { day:'numeric', month:'long', weekday:'long' });
+      calGrid.appendChild(cell);
     }
 
-    function formatCountdown(rem) {
-      if (rem.fired) return '✓';
-      const diff = new Date(rem.time).getTime() - Date.now();
-      if (diff <= 0) return 'Зараз';
-      if (diff < 3600000) return Math.ceil(diff / 60000) + ' хв';
-      if (diff < 86400000) {
-        const h = Math.floor(diff / 3600000);
-        const m = Math.ceil((diff % 3600000) / 60000);
-        return h + ' год ' + m + ' хв';
-      }
-      const d = Math.floor(diff / 86400000);
-      return d + ' дн';
-    }
+    // Time rows
+    const ws = new Date(weekStart);
+    const todayStr = formatDate(new Date());
 
-    function render() {
-      list.innerHTML = '';
-      if (reminders.length === 0) { emptyMsg.style.display = 'block'; return; }
-      emptyMsg.style.display = 'none';
+    for (const h of HOURS) {
+      const timeCell = document.createElement('div');
+      timeCell.className = 'cal-cell time';
+      timeCell.innerHTML = '<span class="label">' + h.toString().padStart(2,'0') + ':00</span>';
+      calGrid.appendChild(timeCell);
 
-      const now = new Date();
-      const todayStr = now.toISOString().slice(0, 10);
-      let tToday = 0, tDone = 0;
+      for (let d = 0; d < 7; d++) {
+        const dayDate = new Date(ws);
+        dayDate.setDate(dayDate.getDate() + d);
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        cell.dataset.day = d;
+        cell.dataset.hour = h;
 
-      const sorted = [...reminders].sort((a, b) => new Date(a.time) - new Date(b.time));
-      sorted.forEach(rem => {
-        const d = new Date(rem.time);
-        if (d.toISOString().slice(0, 10) === todayStr) tToday++;
-        if (rem.fired) tDone++;
-      });
-
-      todayCount.textContent = tToday;
-      doneCount.textContent = tDone;
-      activeCount.textContent = reminders.filter(r => !r.fired).length;
-
-      sorted.forEach((rem, idx) => {
-        const realIdx = reminders.indexOf(rem);
-        const div = document.createElement('div');
-        div.className = 'reminder ' + (rem.priority || 'medium') + (rem.fired ? ' fired' : '');
-
-        const info = document.createElement('div');
-        info.className = 'info';
-
-        const text = document.createElement('div');
-        text.className = 'text';
-        text.textContent = rem.text;
-
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-
-        const timeSpan = document.createElement('span');
-        timeSpan.textContent = new Date(rem.time).toLocaleString('uk-UA');
-
-        meta.appendChild(timeSpan);
-
-        if (rem.repeat) {
-          const rb = document.createElement('span');
-          rb.className = 'repeat-badge';
-          rb.textContent = { daily: '🔄 Щодня', weekly: '🔄 Щотижня', monthly: '🔄 Щомісяця' }[rem.repeat] || '🔄';
-          meta.appendChild(rb);
-        }
-
-        const badge = document.createElement('span');
-        badge.textContent = rem.fired ? '✅' : '';
-
-        const cd = document.createElement('span');
-        cd.className = 'countdown';
-        cd.textContent = formatCountdown(rem);
-
-        const del = document.createElement('button');
-        del.className = 'del-btn';
-        del.textContent = '×';
-        del.addEventListener('click', () => {
-          reminders.splice(realIdx, 1);
-          save();
-          render();
+        // Click to add
+        cell.addEventListener('click', (ev) => {
+          if (ev.target.closest('.event')) return;
+          const dd = new Date(ws);
+          dd.setDate(dd.getDate() + d);
+          dd.setHours(h, 0, 0, 0);
+          const iso = dd.toISOString().slice(0, 16);
+          timeInput.value = iso;
+          textInput.focus();
+          // scroll to form
+          document.querySelector('.top-bar').scrollIntoView({ behavior: 'smooth' });
         });
 
-        info.appendChild(text);
-        info.appendChild(meta);
-        div.appendChild(info);
-        div.appendChild(badge);
-        div.appendChild(cd);
-        div.appendChild(del);
-        list.appendChild(div);
-      });
+        calGrid.appendChild(cell);
+      }
     }
 
-    addBtn.addEventListener('click', () => {
-      const text = textInput.value.trim();
-      const time = timeInput.value;
-      if (!text || !time) { showToast('Введіть текст і час'); return; }
-      const dt = new Date(time);
-      if (dt.getTime() <= Date.now()) { showToast('Виберіть час у майбутньому'); return; }
-      reminders.push({ text, time: dt.toISOString(), repeat: repeatSelect.value || '', priority: prioritySelect.value, fired: false });
-      save();
-      render();
-      textInput.value = '';
-      showToast('✅ Нагадування додано');
-      textInput.focus();
+    // Place events
+    for (let i = 0; i < reminders.length; i++) {
+      const rem = reminders[i];
+      const d = new Date(rem.time);
+      const dayIdx = Math.floor((d.getTime() - ws.getTime()) / 86400000);
+      if (dayIdx < 0 || dayIdx > 6) continue;
+      const hour = d.getHours();
+      if (hour < 6 || hour > 23) continue;
 
-      const def = new Date();
-      def.setMinutes(def.getMinutes() + 10);
-      timeInput.value = def.toISOString().slice(0, 16);
-      repeatSelect.value = '';
-      prioritySelect.value = 'medium';
-    });
+      const rowIdx = HOURS.indexOf(hour);
+      if (rowIdx === -1) continue;
 
-    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') timeInput.focus(); });
-    timeInput.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+      // The header takes row 0, time rows start at row 1
+      // Col: header(0) + dayIdx+1
+      const childIdx = (rowIdx + 1) * 8 + 1 + dayIdx;
+      const cell = calGrid.children[childIdx];
+      if (!cell) continue;
 
-    const def = new Date();
-    def.setMinutes(def.getMinutes() + 10);
-    timeInput.value = def.toISOString().slice(0, 16);
+      const el = document.createElement('div');
+      el.className = 'event ' + (rem.priority || 'medium') + (rem.fired ? ' fired' : '');
+      el.innerHTML = '<span class="etext">' + rem.text + '</span> <span class="etime">' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + '</span>';
+      el.title = rem.text + '\n' + d.toLocaleString('uk-UA');
 
-    checkNotifications();
-    initVoice();
-    render();
-    setInterval(() => { checkReminders(); render(); }, 2000);
-  </script>
+      initDrag(el, i);
+      cell.appendChild(el);
+    }
+
+    // Week title
+    const monday = new Date(weekStart);
+    const sunday = new Date(weekStart);
+    sunday.setDate(sunday.getDate() + 6);
+    weekTitle.textContent = monday.toLocaleDateString('uk-UA', { day:'numeric', month:'long' }) + ' — ' + sunday.toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  // --- Navigation ---
+  prevWeekBtn.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() - 7); render(); });
+  nextWeekBtn.addEventListener('click', () => { weekStart.setDate(weekStart.getDate() + 7); render(); });
+  todayBtn.addEventListener('click', () => { weekStart = getMonday(new Date()); render(); });
+
+  // --- Add ---
+  addBtn.addEventListener('click', () => {
+    const text = textInput.value.trim();
+    const time = timeInput.value;
+    if (!text || !time) { showToast('Введіть текст і час'); return; }
+    if (new Date(time).getTime() <= Date.now()) { showToast('Виберіть майбутній час'); return; }
+    reminders.push({ text, time: new Date(time).toISOString(), repeat: repeatSelect.value || '', priority: prioritySelect.value, fired: false });
+    save(); render();
+    textInput.value = '';
+    const def = new Date(); def.setMinutes(def.getMinutes()+10);
+    timeInput.value = def.toISOString().slice(0,16);
+    repeatSelect.value = ''; prioritySelect.value = 'medium';
+    showToast('✅ Додано');
+  });
+  textInput.addEventListener('keydown', e => { if (e.key === 'Enter') timeInput.focus(); });
+  timeInput.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+
+  // --- List toggle ---
+  viewListBtn.addEventListener('click', () => {
+    const show = listSection.style.display === 'none';
+    listSection.style.display = show ? 'block' : 'none';
+    viewListBtn.textContent = show ? '📅 Календар' : '📋 Список';
+    if (show) renderList();
+  });
+
+  function renderList() {
+    listContent.innerHTML = '';
+    const sorted = [...reminders].sort((a,b) => new Date(a.time) - new Date(b.time));
+    for (let i = 0; i < sorted.length; i++) {
+      const rem = sorted[i];
+      const realIdx = reminders.indexOf(rem);
+      const div = document.createElement('div');
+      div.className = 'reminder ' + (rem.priority||'medium') + (rem.fired?' fired':'');
+      div.innerHTML = '<span class="rtext">' + rem.text + '</span><span class="rtime">' + new Date(rem.time).toLocaleString('uk-UA') + '</span>';
+      const del = document.createElement('button');
+      del.className = 'rdel'; del.textContent = '×';
+      del.addEventListener('click', () => { reminders.splice(realIdx,1); save(); render(); if (listSection.style.display!=='none') renderList(); });
+      div.appendChild(del);
+      listContent.appendChild(div);
+    }
+  }
+
+  // --- Init ---
+  const def = new Date(); def.setMinutes(def.getMinutes()+10);
+  timeInput.value = def.toISOString().slice(0,16);
+
+  checkNotifications();
+  initVoice();
+  render();
+  setInterval(() => checkReminders(), 2000);
+</script>
 </body>
 </html>
