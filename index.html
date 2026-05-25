@@ -48,6 +48,10 @@
     .event.dragging { opacity: .3; }
     .event .etext { font-weight: 500; }
     .event .etime { font-size: 9px; opacity: .7; }
+    .event .edel { display: none; position: absolute; top: 1px; right: 2px; background: none; border: none; color: #fff; font-size: 12px; cursor: pointer; padding: 0 2px; line-height: 1; opacity: .6; }
+    .event .edel:hover { opacity: 1; color: #ff4444; }
+    .event:hover .edel { display: block; }
+    .event.medium .edel { color: #111; }
 
     .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; font-size: 11px; padding: 4px 8px; border-radius: 6px; color: #fff; opacity: .85; transform: translate(-50%, -50%); box-shadow: 0 4px 20px rgba(0,0,0,.5); }
 
@@ -376,7 +380,13 @@
       const icon = { high: '🔴', medium: '🟡', low: '🟢' }[p] || '';
       const el = document.createElement('div');
       el.className = 'event ' + p + (rem.fired ? ' fired' : '');
+      el.style.position = 'relative';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'edel';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', (e) => { e.stopPropagation(); reminders.splice(i, 1); save(); render(); showToast('🗑️ Видалено'); });
       el.innerHTML = '<span class="etext">' + icon + ' ' + rem.text + '</span> <span class="etime">' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0') + '</span>';
+      el.appendChild(delBtn);
       el.title = rem.text + '\n' + d.toLocaleString('uk-UA');
 
       initDrag(el, i);
