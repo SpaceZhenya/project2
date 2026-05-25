@@ -56,20 +56,27 @@
 
     .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; font-size: 11px; padding: 4px 8px; border-radius: 6px; color: #fff; opacity: .85; transform: translate(-50%, -50%); box-shadow: 0 4px 20px rgba(0,0,0,.5); }
 
-    .list-section { margin-top: 8px; flex-shrink: 0; max-height: 140px; overflow-y: auto; }
+    .list-section { display: none; flex: 1; overflow-y: auto; padding: 6px 0; }
     .list-section::-webkit-scrollbar { width: 4px; }
     .list-section::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-    .list-toggle { background: none; border: none; color: #555; cursor: pointer; font-size: 12px; padding: 4px; width: 100%; text-align: center; }
-    .list-toggle:hover { color: #888; }
-    .reminder { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: #1a1a2e; margin-bottom: 2px; border-radius: 6px; border-left: 3px solid #4a9eff; font-size: 12px; }
-    .reminder.high { border-left-color: #e94560; }
-    .reminder.medium { border-left-color: #f0a500; }
-    .reminder.low { border-left-color: #4a9eff; }
-    .reminder.fired { opacity: .3; }
-    .reminder .rtext { flex: 1; }
-    .reminder .rtime { color: #666; font-size: 11px; margin-right: 6px; }
-    .reminder .rdel { background: none; border: none; color: #444; cursor: pointer; font-size: 14px; padding: 0 2px; }
-    .reminder .rdel:hover { color: #e74c3c; }
+    .list-section .lhead { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; margin-bottom: 6px; }
+    .list-section .lhead span { font-size: 14px; color: #888; }
+    .list-section .lhead button { background: none; border: none; color: #e94560; cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+    .list-section .lhead button:hover { background: #2a1a1a; }
+    .litem { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1a1a2e; margin-bottom: 3px; border-radius: 8px; border-left: 4px solid #4a9eff; font-size: 13px; transition: .15s; }
+    .litem:hover { background: #222240; }
+    .litem.high { border-left-color: #e94560; }
+    .litem.medium { border-left-color: #f0a500; }
+    .litem.low { border-left-color: #4a9eff; }
+    .litem.fired { opacity: .35; }
+    .litem .licon { font-size: 14px; flex-shrink: 0; }
+    .litem .ltext { flex: 1; word-break: break-word; }
+    .litem .ltime { color: #666; font-size: 11px; white-space: nowrap; }
+    .litem .lrepeat { color: #f0a500; font-size: 11px; margin-right: 4px; }
+    .litem .ldel { background: none; border: none; color: #444; cursor: pointer; font-size: 16px; padding: 0 4px; opacity: 0; transition: .2s; }
+    .litem:hover .ldel { opacity: 1; }
+    .litem .ldel:hover { color: #e74c3c; }
+    .lempty { text-align: center; color: #444; margin-top: 40px; font-size: 14px; }
 
     .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #1a3a1a; border: 1px solid #2a5a2a; color: #8f8; padding: 6px 16px; border-radius: 8px; font-size: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
     .toast.show { opacity: 1; }
@@ -125,8 +132,11 @@
     <div class="cal-grid" id="calGrid"></div>
   </div>
 
-  <div class="list-section" id="listSection" style="display:none">
-    <button class="list-toggle" id="listToggle">▲ Список справ</button>
+  <div class="list-section" id="listSection">
+    <div class="lhead">
+      <span id="listCount"></span>
+      <button id="clearAllBtn">Очистити всі</button>
+    </div>
     <div id="listContent"></div>
   </div>
 </div>
@@ -149,6 +159,8 @@
   const viewListBtn = document.getElementById('viewListBtn');
   const listSection = document.getElementById('listSection');
   const listContent = document.getElementById('listContent');
+  const listCount = document.getElementById('listCount');
+  const clearAllBtn = document.getElementById('clearAllBtn');
   const toast = document.getElementById('toast');
   const permBanner = document.getElementById('permBanner');
   const permBtn = document.getElementById('permBtn');
@@ -156,6 +168,7 @@
   let reminders = JSON.parse(localStorage.getItem('remCal') || '[]');
   let weekStart = getMonday(new Date());
   let dragData = null;
+  let showList = false;
 
   const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
   const HOURS = Array.from({length:18}, (_,i) => i + 6); // 6..23
@@ -307,7 +320,7 @@
 
   // --- Calendar render ---
   function render() {
-    // Build calendar grid
+    if (showList) return;
     calGrid.innerHTML = '';
 
     // Header row
@@ -420,7 +433,7 @@
     if (!text || !time) { showToast('Введіть текст і час'); return; }
     if (new Date(time).getTime() <= Date.now()) { showToast('Виберіть майбутній час'); return; }
     reminders.push({ text, time: new Date(time).toISOString(), repeat: repeatSelect.value || '', priority: prioritySelect.value, fired: false });
-    save(); render();
+    save(); if (showList) renderList(); else render();
     textInput.value = '';
     const def = new Date(); def.setMinutes(def.getMinutes()+10);
     timeInput.value = def.toISOString().slice(0,16);
@@ -430,30 +443,92 @@
   textInput.addEventListener('keydown', e => { if (e.key === 'Enter') timeInput.focus(); });
   timeInput.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
 
-  // --- List toggle ---
-  viewListBtn.addEventListener('click', () => {
-    const show = listSection.style.display === 'none';
-    listSection.style.display = show ? 'block' : 'none';
-    viewListBtn.textContent = show ? '📅 Календар' : '📋 Список';
-    if (show) renderList();
-  });
+  // --- View toggle ---
+  function switchView(toList) {
+    showList = toList;
+    if (toList) {
+      calWrap.style.display = 'none';
+      listSection.style.display = 'block';
+      viewListBtn.textContent = '📅 Календар';
+      document.querySelector('.nav-bar').style.display = 'none';
+      renderList();
+    } else {
+      calWrap.style.display = 'block';
+      listSection.style.display = 'none';
+      viewListBtn.textContent = '📋 Список';
+      document.querySelector('.nav-bar').style.display = 'flex';
+      render();
+    }
+  }
+
+  viewListBtn.addEventListener('click', () => switchView(!showList));
 
   function renderList() {
     listContent.innerHTML = '';
+    if (reminders.length === 0) {
+      listContent.innerHTML = '<div class="lempty">Немає нагадувань</div>';
+      listCount.textContent = '0 справ';
+      return;
+    }
+    const done = reminders.filter(r => r.fired).length;
+    listCount.textContent = reminders.length + ' справ, ' + done + ' виконано';
+
     const sorted = [...reminders].sort((a,b) => new Date(a.time) - new Date(b.time));
-    for (let i = 0; i < sorted.length; i++) {
-      const rem = sorted[i];
+    sorted.forEach((rem, idx) => {
       const realIdx = reminders.indexOf(rem);
+      const p = rem.priority || 'medium';
+      const icon = { high: '🔴', medium: '🟡', low: '🟢' }[p] || '';
       const div = document.createElement('div');
-      div.className = 'reminder ' + (rem.priority||'medium') + (rem.fired?' fired':'');
-      div.innerHTML = '<span class="rtext">' + rem.text + '</span><span class="rtime">' + new Date(rem.time).toLocaleString('uk-UA') + '</span>';
+      div.className = 'litem ' + p + (rem.fired ? ' fired' : '');
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'licon';
+      iconSpan.textContent = icon;
+
+      const text = document.createElement('span');
+      text.className = 'ltext';
+      text.textContent = rem.text;
+
+      const time = document.createElement('span');
+      time.className = 'ltime';
+      time.textContent = new Date(rem.time).toLocaleString('uk-UA');
+
       const del = document.createElement('button');
-      del.className = 'rdel'; del.textContent = '×';
-      del.addEventListener('click', () => { reminders.splice(realIdx,1); save(); render(); if (listSection.style.display!=='none') renderList(); });
+      del.className = 'ldel';
+      del.textContent = '×';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        reminders.splice(realIdx, 1);
+        save();
+        if (showList) renderList();
+        render();
+        showToast('🗑️ Видалено');
+      });
+
+      div.appendChild(iconSpan);
+      div.appendChild(text);
+      if (rem.repeat) {
+        const rep = document.createElement('span');
+        rep.className = 'lrepeat';
+        rep.textContent = { daily: '🔄', weekly: '🔁', monthly: '🔃' }[rem.repeat] || '';
+        div.appendChild(rep);
+      }
+      div.appendChild(time);
       div.appendChild(del);
       listContent.appendChild(div);
-    }
+    });
   }
+
+  clearAllBtn.addEventListener('click', () => {
+    if (reminders.length === 0) return;
+    if (confirm('Очистити всі нагадування?')) {
+      reminders = [];
+      save();
+      if (showList) renderList();
+      render();
+      showToast('🗑️ Очищено');
+    }
+  });
 
   // --- Deselect on click outside ---
   document.addEventListener('click', (e) => {
@@ -467,7 +542,7 @@
   checkNotifications();
   initVoice();
   render();
-  setInterval(() => checkReminders(), 2000);
+  setInterval(() => { checkReminders(); if (showList) renderList(); }, 2000);
 </script>
 </body>
 </html>
