@@ -3,191 +3,202 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELIZA — психотерапевт</title>
+  <title>Нагадування</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 30px auto; padding: 0 16px; background: #1a1a2e; color: #e0e0e0; }
-    h1 { text-align: center; font-size: 22px; color: #e94560; letter-spacing: 2px; margin-bottom: 8px; }
-    .subtitle { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
-    .chat { background: #16213e; border-radius: 12px; padding: 16px; height: 400px; overflow-y: auto; margin-bottom: 12px; scroll-behavior: smooth; }
-    .chat::-webkit-scrollbar { width: 6px; }
-    .chat::-webkit-scrollbar-track { background: transparent; }
-    .chat::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-    .msg { margin-bottom: 12px; display: flex; }
-    .msg.eliza { justify-content: flex-start; }
-    .msg.you { justify-content: flex-end; }
-    .bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
-    .msg.eliza .bubble { background: #0f3460; color: #e0e0e0; border-bottom-left-radius: 4px; }
-    .msg.you .bubble { background: #e94560; color: #fff; border-bottom-right-radius: 4px; }
-    .msg.eliza .avatar { width: 32px; height: 32px; border-radius: 50%; background: #0f3460; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 16px; flex-shrink: 0; }
-    .msg.you .avatar { width: 32px; height: 32px; border-radius: 50%; background: #e94560; display: flex; align-items: center; justify-content: center; margin-left: 8px; font-size: 16px; flex-shrink: 0; }
-    .input-row { display: flex; gap: 8px; }
-    .input-row input { flex: 1; padding: 12px 16px; font-size: 14px; border: 2px solid #333; border-radius: 10px; outline: none; background: #16213e; color: #e0e0e0; }
-    .input-row input:focus { border-color: #e94560; }
-    .input-row input::placeholder { color: #555; }
-    .input-row button { padding: 12px 20px; background: #e94560; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
-    .input-row button:hover { background: #ff6b81; }
-    .tools { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-    .tools button { background: #0f3460; color: #aaa; border: 1px solid #333; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; }
-    .tools button:hover { background: #1a4a80; color: #fff; }
-    .typing { color: #666; font-style: italic; font-size: 13px; text-align: center; margin: 4px 0; display: none; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; background: #0f0f1a; color: #e0e0e0; }
+    h1 { text-align: center; font-size: 24px; color: #4a9eff; margin-bottom: 20px; }
+    .add-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .add-row input { flex: 1; min-width: 140px; padding: 10px 14px; font-size: 14px; border: 2px solid #333; border-radius: 8px; outline: none; background: #1a1a2e; color: #e0e0e0; }
+    .add-row input:focus { border-color: #4a9eff; }
+    .add-row input[type="datetime-local"] { flex: 0 0 auto; min-width: 200px; color-scheme: dark; }
+    .add-row button { padding: 10px 20px; background: #4a9eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .add-row button:hover { background: #3a8eef; }
+    .reminder { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #1a1a2e; border-radius: 10px; margin-bottom: 6px; border-left: 4px solid #4a9eff; }
+    .reminder.fired { border-left-color: #555; opacity: .5; }
+    .reminder .info { flex: 1; }
+    .reminder .text { font-size: 15px; }
+    .reminder .time { font-size: 12px; color: #888; margin-top: 2px; }
+    .reminder .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #2d2d5e; color: #4a9eff; }
+    .reminder.fired .status-badge { background: #2d2d2d; color: #666; }
+    .reminder .del-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 20px; padding: 0 4px; }
+    .reminder .del-btn:hover { color: #e74c3c; }
+    .empty { text-align: center; color: #555; margin-top: 40px; font-size: 14px; }
+    .perm-banner { background: #2d1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; align-items: center; gap: 10px; }
+    .perm-banner button { background: #e94560; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
   </style>
 </head>
 <body>
-  <h1>🧑‍⚕️ ELIZA</h1>
-  <p class="subtitle">Ваш віртуальний психотерапевт (1966)</p>
+  <h1>Нагадування</h1>
 
-  <div class="chat" id="chat"></div>
-  <div class="typing" id="typing">ELIZA друкує...</div>
-
-  <div class="input-row">
-    <input type="text" id="msgInput" placeholder="Напишіть щось..." />
-    <button id="sendBtn">Надіслати</button>
+  <div class="perm-banner" id="permBanner">
+    <span>🔔 Увімкніть сповіщення, щоб отримувати нагадування вчасно</span>
+    <button id="permBtn">Увімкнути</button>
   </div>
 
-  <div class="tools">
-    <button id="clearBtn">Очистити історію</button>
-    <button id="saveBtn">Зберегти діалог</button>
+  <div class="add-row">
+    <input type="text" id="textInput" placeholder="Що нагадати?" />
+    <input type="datetime-local" id="timeInput" />
+    <button id="addBtn">Додати</button>
   </div>
+
+  <div id="list"></div>
+  <div class="empty" id="emptyMsg">Немає нагадувань. Додайте нове!</div>
 
   <script>
-    const chat = document.getElementById('chat');
-    const msgInput = document.getElementById('msgInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const typing = document.getElementById('typing');
-    const clearBtn = document.getElementById('clearBtn');
-    const saveBtn = document.getElementById('saveBtn');
+    const textInput = document.getElementById('textInput');
+    const timeInput = document.getElementById('timeInput');
+    const addBtn = document.getElementById('addBtn');
+    const list = document.getElementById('list');
+    const emptyMsg = document.getElementById('emptyMsg');
+    const permBanner = document.getElementById('permBanner');
+    const permBtn = document.getElementById('permBtn');
 
-    let history = JSON.parse(localStorage.getItem('elizaHistory') || '[]');
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
 
-    const reflections = {
-      am: 'are', was: 'were', i: 'you', i'd: 'you would',
-      i've: 'you have', i'll: 'you will', my: 'your',
-      me: 'you', mine: 'yours', myself: 'yourself',
-      your: 'my', yours: 'mine', you: 'I', yourself: 'myself'
-    };
-
-    function reflect(text) {
-      const words = text.toLowerCase().split(' ');
-      return words.map(w => reflections[w] || w).join(' ');
+    function save() {
+      localStorage.setItem('reminders', JSON.stringify(reminders));
     }
 
-    const responses = [
-      { match: /(мам|тат|брат|сестр|сім[ья'ї]|родин)/i, reply: 'Розкажіть більше про ваші родинні стосунки.' },
-      { match: /(батьк|матер|отец)/i, reply: 'Як ви ставитеся до своїх батьків?' },
-      { match: /(друг|подруг|товариш)/i, reply: 'Розкажіть про ваших друзів.' },
-      { match: /(щаст|рад|добре|чудов|прекрасн)/i, reply: 'Чому ви відчуваєте це?' },
-      { match: /(сум|погано|поган|жаль|плак|депрес|самотн)/i, reply: 'Мені шкода, що вам сумно. Розкажіть детальніше.' },
-      { match: /(страш|боюс|тривог|хвилю|нерв)/i, reply: 'Чи часто ви відчуваєте тривогу?' },
-      { match: /(зл|гнів|роздрат|бісит|дістал)/i, reply: 'Чому це викликає у вас гнів?' },
-      { match: /(любл|коха|подоба|цікав|захопл)/i, reply: 'Що саме вам у цьому подобається?' },
-      { match: /(ні|не|ноу|no|nah)/i, reply: 'Чому ні?' },
-      { match: /(так|yes|так|ага|угу)/i, reply: 'Розкажіть більше.' },
-      { match: /(можлив|напевно|здаєть|мабуть|може)/i, reply: 'Чому ви не впевнені?' },
-      { match: /(сон|спит|втом|відпочи)/i, reply: 'Як у вас зі сном?' },
-      { match: /(робот|прац|справ|діл|занят|хобі)/i, reply: 'Чи задоволені ви цим?' },
-      { match: /(хочу|бажа|мрі|ціл)/i, reply: 'Чому ви цього хочете?' },
-      { match: /(треба|потріб|мушу|повин)/i, reply: 'Чому ви вважаєте, що це обов\'язково?' },
-      { match: /(дума|вважа|гада|здає)/i, reply: 'Чому ви так думаєте?' },
-      { match: /(пробач|вибач|сором|перепрош)/i, reply: 'Не потрібно вибачатися. Розкажіть, що сталося.' },
-      { match: /(допом|порад|підкаж)/i, reply: 'Яку саме допомогу ви шукаєте?' },
-      { match: /(бувай|до побачен|папа|бай|бува)/i, reply: 'До побачення. Бережіть себе.' },
-      { match: /(я |мен|мій|моє|мене)/i, reply: null }
-    ];
+    function checkNotifications() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        permBanner.style.display = 'none';
+      } else if (Notification.permission === 'denied') {
+        permBanner.style.display = 'flex';
+        permBtn.textContent = 'Заблоковано';
+        permBtn.disabled = true;
+      } else {
+        permBanner.style.display = 'flex';
+      }
+    }
 
-    function getReply(text) {
-      for (const r of responses) {
-        if (r.match.test(text)) {
-          if (r.reply === null) {
-            return randomReply(text);
-          }
-          return r.reply;
+    permBtn.addEventListener('click', () => {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') permBanner.style.display = 'none';
+      });
+    });
+
+    function notify(reminder) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Нагадування', {
+          body: reminder.text,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>'
+        });
+      }
+      // beep
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = 880;
+        gain.gain.value = 0.3;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch {}
+    }
+
+    function checkReminders() {
+      const now = Date.now();
+      let changed = false;
+      for (const r of reminders) {
+        if (!r.fired && new Date(r.time).getTime() <= now) {
+          r.fired = true;
+          changed = true;
+          notify(r);
         }
       }
-      return randomReply(text);
+      if (changed) { save(); render(); }
     }
 
-    function randomReply(text) {
-      const generic = [
-        'Розкажіть більше про це.',
-        'Чому ви так вважаєте?',
-        'Як давно це триває?',
-        'Що ви відчуваєте з цього приводу?',
-        'Це дуже цікаво. Продовжуйте.',
-        'Я розумію. Що ще ви можете сказати?',
-        'Як ви на це реагуєте?',
-        'Чи впливає це на ваше життя?',
-        'Розкажіть, будь ласка, детальніше.',
-        'Чи говорили ви про це з кимось?',
-      ];
-      return generic[Math.floor(Math.random() * generic.length)];
-    }
-
-    function addMessage(who, text) {
-      const div = document.createElement('div');
-      div.className = 'msg ' + who;
-      const avatar = document.createElement('div');
-      avatar.className = 'avatar';
-      avatar.textContent = who === 'eliza' ? '💬' : '👤';
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      bubble.textContent = text;
-      if (who === 'eliza') { div.appendChild(avatar); div.appendChild(bubble); }
-      else { div.appendChild(bubble); div.appendChild(avatar); }
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function renderHistory() {
-      chat.innerHTML = '';
-      for (const msg of history) {
-        addMessage(msg.who, msg.text);
+    function render() {
+      list.innerHTML = '';
+      if (reminders.length === 0) {
+        emptyMsg.style.display = 'block';
+        return;
       }
-      chat.scrollTop = chat.scrollHeight;
+      emptyMsg.style.display = 'none';
+
+      const sorted = [...reminders].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+      sorted.forEach((rem, idx) => {
+        const realIdx = reminders.indexOf(rem);
+        const div = document.createElement('div');
+        div.className = 'reminder' + (rem.fired ? ' fired' : '');
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const text = document.createElement('div');
+        text.className = 'text';
+        text.textContent = rem.text;
+
+        const time = document.createElement('div');
+        time.className = 'time';
+        const d = new Date(rem.time);
+        time.textContent = d.toLocaleString('uk-UA');
+
+        const badge = document.createElement('span');
+        badge.className = 'status-badge';
+        badge.textContent = rem.fired ? '✓ Сповіщено' : '⏳ Очікує';
+
+        const del = document.createElement('button');
+        del.className = 'del-btn';
+        del.textContent = '×';
+        del.addEventListener('click', () => {
+          reminders.splice(realIdx, 1);
+          if (realIdx < 1) clearInterval(interval);
+          save();
+          render();
+        });
+
+        info.appendChild(text);
+        info.appendChild(time);
+        div.appendChild(info);
+        div.appendChild(badge);
+        div.appendChild(del);
+        list.appendChild(div);
+      });
     }
 
-    async function sendMessage() {
-      const text = msgInput.value.trim();
-      if (!text) return;
-      msgInput.value = '';
+    addBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      const time = timeInput.value;
+      if (!text || !time) return;
 
-      history.push({ who: 'you', text });
-      addMessage('you', text);
-      localStorage.setItem('elizaHistory', JSON.stringify(history));
+      const dt = new Date(time);
+      if (dt.getTime() <= Date.now()) {
+        alert('Виберіть час у майбутньому');
+        return;
+      }
 
-      typing.style.display = 'block';
-      sendBtn.disabled = true;
-
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 800));
-
-      typing.style.display = 'none';
-      sendBtn.disabled = false;
-
-      const reply = getReply(text);
-      history.push({ who: 'eliza', text: reply });
-      addMessage('eliza', reply);
-      localStorage.setItem('elizaHistory', JSON.stringify(history));
-    }
-
-    sendBtn.addEventListener('click', sendMessage);
-    msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); msgInput.focus(); });
-
-    clearBtn.addEventListener('click', () => {
-      history = [];
-      localStorage.removeItem('elizaHistory');
-      renderHistory();
+      reminders.push({ text, time: dt.toISOString(), fired: false });
+      save();
+      render();
+      textInput.value = '';
+      timeInput.value = '';
+      textInput.focus();
     });
 
-    saveBtn.addEventListener('click', () => {
-      const text = history.map(m => (m.who === 'eliza' ? 'ELIZA' : 'Ви') + ': ' + m.text).join('\n');
-      const blob = new Blob([text], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'eliza_dialog.txt';
-      a.click();
+    textInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') timeInput.focus();
+    });
+    timeInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addBtn.click();
     });
 
-    renderHistory();
+    checkNotifications();
+
+    // Set default time to 10 minutes from now
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 10);
+    timeInput.value = now.toISOString().slice(0, 16);
+
+    render();
+    setInterval(checkReminders, 2000);
   </script>
 </body>
 </html>
