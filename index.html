@@ -117,15 +117,13 @@
   </div>
 
   <div class="nav-bar">
-    <div class="nav-group">
+    <div class="nav-group" id="weekNav">
       <button id="prevWeekBtn">◀</button>
       <button id="todayBtn" class="today-btn">Сьогодні</button>
       <button id="nextWeekBtn">▶</button>
     </div>
     <span class="week-title" id="weekTitle"></span>
-    <div class="nav-group">
-      <button id="viewListBtn">📋 Список</button>
-    </div>
+    <button id="viewListBtn">📋 Список</button>
   </div>
 
   <div class="cal-wrap" id="calWrap">
@@ -153,6 +151,7 @@
   const calGrid = document.getElementById('calGrid');
   const calWrap = document.getElementById('calWrap');
   const weekTitle = document.getElementById('weekTitle');
+  const weekNav = document.getElementById('weekNav');
   const prevWeekBtn = document.getElementById('prevWeekBtn');
   const nextWeekBtn = document.getElementById('nextWeekBtn');
   const todayBtn = document.getElementById('todayBtn');
@@ -450,13 +449,18 @@
       calWrap.style.display = 'none';
       listSection.style.display = 'block';
       viewListBtn.textContent = '📅 Календар';
-      document.querySelector('.nav-bar').style.display = 'none';
+      document.getElementById('weekNav').style.display = 'none';
+      weekTitle.textContent = 'Список справ';
       renderList();
     } else {
       calWrap.style.display = 'block';
       listSection.style.display = 'none';
       viewListBtn.textContent = '📋 Список';
-      document.querySelector('.nav-bar').style.display = 'flex';
+      document.getElementById('weekNav').style.display = 'flex';
+      const monday = new Date(weekStart);
+      const sunday = new Date(weekStart);
+      sunday.setDate(sunday.getDate() + 6);
+      weekTitle.textContent = monday.toLocaleDateString('uk-UA', { day:'numeric', month:'long' }) + ' — ' + sunday.toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' });
       render();
     }
   }
