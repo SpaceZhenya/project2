@@ -6,128 +6,245 @@
   <title>Нагадування</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; background: #0f0f1a; color: #e0e0e0; }
-    h1 { text-align: center; font-size: 24px; color: #4a9eff; margin-bottom: 20px; }
-    .add-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-    .add-row input { flex: 1; min-width: 140px; padding: 10px 14px; font-size: 14px; border: 2px solid #333; border-radius: 8px; outline: none; background: #1a1a2e; color: #e0e0e0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 30px auto; padding: 0 16px; background: #0f0f1a; color: #e0e0e0; }
+    h1 { text-align: center; font-size: 22px; color: #4a9eff; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .stats { display: flex; justify-content: center; gap: 16px; font-size: 13px; color: #888; margin-bottom: 14px; flex-wrap: wrap; }
+    .stats span { background: #1a1a2e; padding: 4px 14px; border-radius: 20px; border: 1px solid #2a2a3e; }
+    .stats b { color: #4a9eff; }
+    .add-row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .add-row input { flex: 1; min-width: 120px; padding: 10px 12px; font-size: 14px; border: 2px solid #333; border-radius: 8px; outline: none; background: #1a1a2e; color: #e0e0e0; }
     .add-row input:focus { border-color: #4a9eff; }
-    .add-row input[type="datetime-local"] { flex: 0 0 auto; min-width: 200px; color-scheme: dark; }
-    .add-row button { padding: 10px 20px; background: #4a9eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .add-row input[type="datetime-local"] { min-width: 180px; color-scheme: dark; }
+    .add-row select { padding: 10px 8px; font-size: 13px; border: 2px solid #333; border-radius: 8px; background: #1a1a2e; color: #e0e0e0; outline: none; cursor: pointer; }
+    .add-row button { padding: 10px 16px; background: #4a9eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; white-space: nowrap; }
     .add-row button:hover { background: #3a8eef; }
-    .reminder { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #1a1a2e; border-radius: 10px; margin-bottom: 6px; border-left: 4px solid #4a9eff; }
-    .reminder.fired { border-left-color: #555; opacity: .5; }
-    .reminder .info { flex: 1; }
-    .reminder .text { font-size: 15px; }
-    .reminder .time { font-size: 12px; color: #888; margin-top: 2px; }
-    .reminder .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #2d2d5e; color: #4a9eff; }
-    .reminder.fired .status-badge { background: #2d2d2d; color: #666; }
-    .reminder .del-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 20px; padding: 0 4px; }
+    .add-row .voice-btn { background: #2d2d5e; }
+    .add-row .voice-btn:hover { background: #3d3d7e; }
+    .add-row .voice-btn.listening { background: #e94560; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .reminder { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #1a1a2e; border-radius: 10px; margin-bottom: 5px; border-left: 4px solid #4a9eff; transition: .2s; }
+    .reminder.high { border-left-color: #e94560; }
+    .reminder.medium { border-left-color: #f0a500; }
+    .reminder.low { border-left-color: #4a9eff; }
+    .reminder.fired { opacity: .4; border-left-color: #555 !important; }
+    .reminder .info { flex: 1; min-width: 0; }
+    .reminder .text { font-size: 14px; word-break: break-word; }
+    .reminder .meta { font-size: 11px; color: #666; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .reminder .meta .repeat-badge { color: #f0a500; }
+    .reminder .countdown { font-size: 12px; color: #4a9eff; font-weight: 600; min-width: 70px; text-align: right; }
+    .reminder.fired .countdown { color: #555; }
+    .reminder .del-btn { background: none; border: none; color: #444; cursor: pointer; font-size: 18px; padding: 0 2px; }
     .reminder .del-btn:hover { color: #e74c3c; }
-    .empty { text-align: center; color: #555; margin-top: 40px; font-size: 14px; }
-    .perm-banner { background: #2d1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; align-items: center; gap: 10px; }
-    .perm-banner button { background: #e94560; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
+    .empty { text-align: center; color: #444; margin-top: 40px; font-size: 14px; }
+    .perm-banner { background: #2d1a1a; border: 1px solid #5a2020; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-bottom: 14px; display: none; align-items: center; gap: 8px; }
+    .perm-banner button { background: #e94560; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 11px; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a3a1a; border: 1px solid #2a5a2a; color: #8f8; padding: 8px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
-  <h1>Нагадування</h1>
+  <h1>⏰ Нагадування</h1>
 
   <div class="perm-banner" id="permBanner">
-    <span>🔔 Увімкніть сповіщення, щоб отримувати нагадування вчасно</span>
+    <span>🔔 Увімкніть сповіщення</span>
     <button id="permBtn">Увімкнути</button>
+  </div>
+
+  <div class="stats">
+    <span>📅 Сьогодні: <b id="todayCount">0</b></span>
+    <span>✅ Виконано: <b id="doneCount">0</b></span>
+    <span>⏳ Активних: <b id="activeCount">0</b></span>
   </div>
 
   <div class="add-row">
     <input type="text" id="textInput" placeholder="Що нагадати?" />
     <input type="datetime-local" id="timeInput" />
-    <button id="addBtn">Додати</button>
+    <select id="repeatSelect">
+      <option value="">Один раз</option>
+      <option value="daily">Щодня</option>
+      <option value="weekly">Щотижня</option>
+      <option value="monthly">Щомісяця</option>
+    </select>
+    <select id="prioritySelect">
+      <option value="low">🟢 Низький</option>
+      <option value="medium" selected>🟡 Середній</option>
+      <option value="high">🔴 Високий</option>
+    </select>
+    <button id="voiceBtn" class="voice-btn" title="Голосовий ввід">🎤</button>
+    <button id="addBtn">+</button>
   </div>
 
   <div id="list"></div>
   <div class="empty" id="emptyMsg">Немає нагадувань. Додайте нове!</div>
+  <div class="toast" id="toast"></div>
 
   <script>
     const textInput = document.getElementById('textInput');
     const timeInput = document.getElementById('timeInput');
+    const repeatSelect = document.getElementById('repeatSelect');
+    const prioritySelect = document.getElementById('prioritySelect');
     const addBtn = document.getElementById('addBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
     const list = document.getElementById('list');
     const emptyMsg = document.getElementById('emptyMsg');
     const permBanner = document.getElementById('permBanner');
     const permBtn = document.getElementById('permBtn');
+    const todayCount = document.getElementById('todayCount');
+    const doneCount = document.getElementById('doneCount');
+    const activeCount = document.getElementById('activeCount');
+    const toast = document.getElementById('toast');
 
-    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+    let reminders = JSON.parse(localStorage.getItem('reminders2') || '[]');
+    let voiceListening = false;
 
-    function save() {
-      localStorage.setItem('reminders', JSON.stringify(reminders));
+    function save() { localStorage.setItem('reminders2', JSON.stringify(reminders)); }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._hide);
+      toast._hide = setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    // --- Notifications ---
     function checkNotifications() {
       if (!('Notification' in window)) return;
-      if (Notification.permission === 'granted') {
-        permBanner.style.display = 'none';
-      } else if (Notification.permission === 'denied') {
-        permBanner.style.display = 'flex';
-        permBtn.textContent = 'Заблоковано';
-        permBtn.disabled = true;
-      } else {
-        permBanner.style.display = 'flex';
-      }
+      if (Notification.permission === 'granted') permBanner.style.display = 'none';
+      else if (Notification.permission === 'denied') { permBanner.style.display = 'flex'; permBtn.textContent = 'Заблоковано'; permBtn.disabled = true; }
+      else permBanner.style.display = 'flex';
     }
-
     permBtn.addEventListener('click', () => {
-      Notification.requestPermission().then(perm => {
-        if (perm === 'granted') permBanner.style.display = 'none';
-      });
+      Notification.requestPermission().then(p => { if (p === 'granted') { permBanner.style.display = 'none'; showToast('Сповіщення увімкнено'); } });
     });
 
-    function notify(reminder) {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Нагадування', {
-          body: reminder.text,
-          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>'
-        });
-      }
-      // beep
+    function notify(rem) {
+      if ('Notification' in window && Notification.permission === 'granted')
+        new Notification('🔔 ' + rem.text, { body: new Date(rem.time).toLocaleString('uk-UA') });
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = 880;
-        gain.gain.value = 0.3;
-        osc.start();
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc.stop(audioCtx.currentTime + 0.5);
+        const a = new (window.AudioContext || window.webkitAudioContext)();
+        const o = a.createOscillator(); const g = a.createGain();
+        o.connect(g); g.connect(a.destination);
+        o.frequency.value = 880; g.gain.value = 0.3;
+        o.start(); g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.5);
+        o.stop(a.currentTime + 0.5);
+        setTimeout(() => a.close(), 1000);
       } catch {}
+    }
+
+    // --- Voice Input ---
+    function initVoice() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { voiceBtn.style.display = 'none'; return; }
+      const recognition = new SR();
+      recognition.lang = 'uk-UA';
+      recognition.interimResults = false;
+
+      voiceBtn.addEventListener('click', () => {
+        if (voiceListening) { recognition.stop(); return; }
+        try {
+          recognition.start();
+          voiceListening = true;
+          voiceBtn.classList.add('listening');
+          voiceBtn.title = 'Слухаю...';
+        } catch {}
+      });
+
+      recognition.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        textInput.value = text;
+        showToast('🎤 Розпізнано: ' + text);
+      };
+      recognition.onend = () => {
+        voiceListening = false;
+        voiceBtn.classList.remove('listening');
+        voiceBtn.title = 'Голосовий ввід';
+      };
+      recognition.onerror = () => {
+        voiceListening = false;
+        voiceBtn.classList.remove('listening');
+        voiceBtn.title = 'Голосовий ввід';
+      };
+    }
+
+    // --- Reminder logic ---
+    function getNextRepeatTime(rem) {
+      const d = new Date(rem.time);
+      const now = Date.now();
+      if (rem.repeat === 'daily') {
+        d.setDate(d.getDate() + 1);
+        while (d.getTime() <= now) d.setDate(d.getDate() + 1);
+        return d.toISOString();
+      }
+      if (rem.repeat === 'weekly') {
+        d.setDate(d.getDate() + 7);
+        while (d.getTime() <= now) d.setDate(d.getDate() + 7);
+        return d.toISOString();
+      }
+      if (rem.repeat === 'monthly') {
+        d.setMonth(d.getMonth() + 1);
+        while (d.getTime() <= now) d.setMonth(d.getMonth() + 1);
+        return d.toISOString();
+      }
+      return null;
     }
 
     function checkReminders() {
       const now = Date.now();
       let changed = false;
+      const toAdd = [];
       for (const r of reminders) {
         if (!r.fired && new Date(r.time).getTime() <= now) {
           r.fired = true;
           changed = true;
           notify(r);
+          if (r.repeat) {
+            const next = getNextRepeatTime(r);
+            if (next) toAdd.push({ text: r.text, time: next, repeat: r.repeat, priority: r.priority, fired: false });
+          }
         }
       }
+      if (toAdd.length) { reminders.push(...toAdd); changed = true; }
       if (changed) { save(); render(); }
+    }
+
+    function formatCountdown(rem) {
+      if (rem.fired) return '✓';
+      const diff = new Date(rem.time).getTime() - Date.now();
+      if (diff <= 0) return 'Зараз';
+      if (diff < 3600000) return Math.ceil(diff / 60000) + ' хв';
+      if (diff < 86400000) {
+        const h = Math.floor(diff / 3600000);
+        const m = Math.ceil((diff % 3600000) / 60000);
+        return h + ' год ' + m + ' хв';
+      }
+      const d = Math.floor(diff / 86400000);
+      return d + ' дн';
     }
 
     function render() {
       list.innerHTML = '';
-      if (reminders.length === 0) {
-        emptyMsg.style.display = 'block';
-        return;
-      }
+      if (reminders.length === 0) { emptyMsg.style.display = 'block'; return; }
       emptyMsg.style.display = 'none';
 
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      let tToday = 0, tDone = 0;
+
       const sorted = [...reminders].sort((a, b) => new Date(a.time) - new Date(b.time));
+      sorted.forEach(rem => {
+        const d = new Date(rem.time);
+        if (d.toISOString().slice(0, 10) === todayStr) tToday++;
+        if (rem.fired) tDone++;
+      });
+
+      todayCount.textContent = tToday;
+      doneCount.textContent = tDone;
+      activeCount.textContent = reminders.filter(r => !r.fired).length;
 
       sorted.forEach((rem, idx) => {
         const realIdx = reminders.indexOf(rem);
         const div = document.createElement('div');
-        div.className = 'reminder' + (rem.fired ? ' fired' : '');
+        div.className = 'reminder ' + (rem.priority || 'medium') + (rem.fired ? ' fired' : '');
 
         const info = document.createElement('div');
         info.className = 'info';
@@ -136,29 +253,42 @@
         text.className = 'text';
         text.textContent = rem.text;
 
-        const time = document.createElement('div');
-        time.className = 'time';
-        const d = new Date(rem.time);
-        time.textContent = d.toLocaleString('uk-UA');
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = new Date(rem.time).toLocaleString('uk-UA');
+
+        meta.appendChild(timeSpan);
+
+        if (rem.repeat) {
+          const rb = document.createElement('span');
+          rb.className = 'repeat-badge';
+          rb.textContent = { daily: '🔄 Щодня', weekly: '🔄 Щотижня', monthly: '🔄 Щомісяця' }[rem.repeat] || '🔄';
+          meta.appendChild(rb);
+        }
 
         const badge = document.createElement('span');
-        badge.className = 'status-badge';
-        badge.textContent = rem.fired ? '✓ Сповіщено' : '⏳ Очікує';
+        badge.textContent = rem.fired ? '✅' : '';
+
+        const cd = document.createElement('span');
+        cd.className = 'countdown';
+        cd.textContent = formatCountdown(rem);
 
         const del = document.createElement('button');
         del.className = 'del-btn';
         del.textContent = '×';
         del.addEventListener('click', () => {
           reminders.splice(realIdx, 1);
-          if (realIdx < 1) clearInterval(interval);
           save();
           render();
         });
 
         info.appendChild(text);
-        info.appendChild(time);
+        info.appendChild(meta);
         div.appendChild(info);
         div.appendChild(badge);
+        div.appendChild(cd);
         div.appendChild(del);
         list.appendChild(div);
       });
@@ -167,38 +297,34 @@
     addBtn.addEventListener('click', () => {
       const text = textInput.value.trim();
       const time = timeInput.value;
-      if (!text || !time) return;
-
+      if (!text || !time) { showToast('Введіть текст і час'); return; }
       const dt = new Date(time);
-      if (dt.getTime() <= Date.now()) {
-        alert('Виберіть час у майбутньому');
-        return;
-      }
-
-      reminders.push({ text, time: dt.toISOString(), fired: false });
+      if (dt.getTime() <= Date.now()) { showToast('Виберіть час у майбутньому'); return; }
+      reminders.push({ text, time: dt.toISOString(), repeat: repeatSelect.value || '', priority: prioritySelect.value, fired: false });
       save();
       render();
       textInput.value = '';
-      timeInput.value = '';
+      showToast('✅ Нагадування додано');
       textInput.focus();
+
+      const def = new Date();
+      def.setMinutes(def.getMinutes() + 10);
+      timeInput.value = def.toISOString().slice(0, 16);
+      repeatSelect.value = '';
+      prioritySelect.value = 'medium';
     });
 
-    textInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') timeInput.focus();
-    });
-    timeInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') addBtn.click();
-    });
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') timeInput.focus(); });
+    timeInput.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+
+    const def = new Date();
+    def.setMinutes(def.getMinutes() + 10);
+    timeInput.value = def.toISOString().slice(0, 16);
 
     checkNotifications();
-
-    // Set default time to 10 minutes from now
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 10);
-    timeInput.value = now.toISOString().slice(0, 16);
-
+    initVoice();
     render();
-    setInterval(checkReminders, 2000);
+    setInterval(() => { checkReminders(); render(); }, 2000);
   </script>
 </body>
 </html>
