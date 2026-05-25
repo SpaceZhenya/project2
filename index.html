@@ -31,12 +31,12 @@
 
     .cal-wrap { flex: 1; overflow: auto; border-radius: 8px; border: 1px solid #222; background: #12121e; min-height: 0; position: relative; }
     .cal-grid { display: grid; grid-template-columns: 50px repeat(7, 1fr); min-width: 0; }
-    .cal-cell { border-right: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; min-height: 36px; padding: 1px; position: relative; }
+    .cal-cell { border-right: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; min-height: 22px; padding: 1px; position: relative; }
     .cal-cell.header { background: #1a1a2e; font-size: 11px; text-align: center; padding: 6px 2px; font-weight: 600; color: #888; position: sticky; top: 0; z-index: 5; }
     .cal-cell.header.today { color: #4a9eff; background: #1a1a3e; }
     .cal-cell.header .num { font-size: 16px; display: block; }
-    .cal-cell.time { background: #0a0a14; color: #555; font-size: 10px; text-align: right; padding-right: 6px; display: flex; align-items: start; justify-content: end; padding-top: 2px; border-bottom: 1px solid #181828; position: relative; }
-    .cal-cell.time .label { position: sticky; top: 0; }
+    .cal-cell.time { background: #0a0a14; color: #555; font-size: 9px; text-align: right; padding-right: 4px; display: flex; align-items: start; justify-content: end; padding-top: 1px; border-bottom: 1px solid #181828; position: relative; min-height: 22px; }
+    .cal-cell.time .label { position: sticky; top: 0; font-size: 9px; }
     .cal-cell.drop-hover { background: #1a2a4e !important; }
 
     .event { font-size: 10px; padding: 2px 4px; border-radius: 4px; cursor: grab; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; transition: opacity .15s; user-select: none; }
@@ -170,7 +170,11 @@
   let showList = false;
 
   const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
-  const HOURS = Array.from({length:18}, (_,i) => i + 6); // 6..23
+  const SLOTS = [];
+  for (let h = 6; h <= 23; h++) {
+    SLOTS.push({ h, m: 0, label: String(h).padStart(2,'0') + ':00' });
+    if (h < 23) SLOTS.push({ h, m: 30, label: String(h).padStart(2,'0') + ':30' });
+  } // 6:00..23:00 = 35 slots
 
   function save() { localStorage.setItem('remCal', JSON.stringify(reminders)); }
 
@@ -300,11 +304,12 @@
 
         const day = parseInt(cell.dataset.day);
         const hour = parseInt(cell.dataset.hour);
+        const min = parseInt(cell.dataset.min) || 0;
         if (isNaN(day) || isNaN(hour)) return;
 
         const ws = new Date(weekStart);
         ws.setDate(ws.getDate() + day);
-        ws.setHours(hour, 0, 0, 0);
+        ws.setHours(hour, min, 0, 0);
         reminders[remIdx].time = ws.toISOString();
         save();
         render();
@@ -340,30 +345,29 @@
     const ws = new Date(weekStart);
     const todayStr = formatDate(new Date());
 
-    for (const h of HOURS) {
+    for (let s = 0; s < SLOTS.length; s++) {
+      const slot = SLOTS[s];
+      const isHalf = s % 2 === 1;
       const timeCell = document.createElement('div');
       timeCell.className = 'cal-cell time';
-      timeCell.innerHTML = '<span class="label">' + h.toString().padStart(2,'0') + ':00</span>';
+      if (!isHalf) timeCell.innerHTML = '<span class="label">' + slot.label + '</span>';
       calGrid.appendChild(timeCell);
 
       for (let d = 0; d < 7; d++) {
-        const dayDate = new Date(ws);
-        dayDate.setDate(dayDate.getDate() + d);
         const cell = document.createElement('div');
         cell.className = 'cal-cell';
         cell.dataset.day = d;
-        cell.dataset.hour = h;
+        cell.dataset.hour = slot.h;
+        cell.dataset.min = slot.m;
 
-        // Click to add
         cell.addEventListener('click', (ev) => {
           if (ev.target.closest('.event')) return;
           const dd = new Date(ws);
           dd.setDate(dd.getDate() + d);
-          dd.setHours(h, 0, 0, 0);
+          dd.setHours(slot.h, slot.m, 0, 0);
           const iso = dd.toISOString().slice(0, 16);
           timeInput.value = iso;
           textInput.focus();
-          // scroll to form
           document.querySelector('.top-bar').scrollIntoView({ behavior: 'smooth' });
         });
 
@@ -378,14 +382,13 @@
       const dayIdx = Math.floor((d.getTime() - ws.getTime()) / 86400000);
       if (dayIdx < 0 || dayIdx > 6) continue;
       const hour = d.getHours();
+      const min = d.getMinutes();
       if (hour < 6 || hour > 23) continue;
 
-      const rowIdx = HOURS.indexOf(hour);
-      if (rowIdx === -1) continue;
+      const slotIdx = (hour - 6) * 2 + (min >= 30 ? 1 : 0);
+      if (slotIdx < 0 || slotIdx >= SLOTS.length) continue;
 
-      // The header takes row 0, time rows start at row 1
-      // Col: header(0) + dayIdx+1
-      const childIdx = (rowIdx + 1) * 8 + 1 + dayIdx;
+      const childIdx = (slotIdx + 1) * 8 + 1 + dayIdx;
       const cell = calGrid.children[childIdx];
       if (!cell) continue;
 
