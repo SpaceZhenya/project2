@@ -247,7 +247,6 @@
     evEl.addEventListener('mousedown', e => {
       e.preventDefault();
       const rem = reminders[remIdx];
-      const rect = calWrap.getBoundingClientRect();
       const ghost = document.createElement('div');
       ghost.className = 'drag-ghost ' + (rem.priority||'medium');
       ghost.textContent = rem.text;
